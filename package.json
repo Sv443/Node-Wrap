@@ -1,14 +1,14 @@
 {
   "name": "node-wrap",
-  "version": "0.1.0",
-  "description": "A lightweight library that wraps your script to restart it once it crashes and to provide other useful stuff",
+  "version": "0.1.1",
+  "description": "A lightweight, zero-dependency package that wraps your script to restart it once it crashes and to provide other useful stuff",
   "main": "node-wrap.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sv443/node-wrapper.git"
+    "url": "git+https://github.com/Sv443/node-wrap.git"
   },
   "keywords": [
     "wrapper",
@@ -20,9 +20,9 @@
   "author": "Sv443",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Sv443/node-wrapper/issues"
+    "url": "https://github.com/Sv443/node-wrap/issues"
   },
-  "homepage": "https://github.com/Sv443/node-wrapper#readme",
+  "homepage": "https://github.com/Sv443/node-wrap#readme",
   "dependencies": {
   }
 }
