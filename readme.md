@@ -4,7 +4,7 @@
 <br>
 
 ---
-## [Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-(some-of-them-changed-from-default)) - [Disclaimer / Issues / Licensing](#disclaimer-%2F-issues-%2F-licensing) - [Status Code Table](#status-codes) - [(TLDR)](#just-to-recap-%2F-tldr)
+## [Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-some-of-them-changed-from-default) - [Disclaimer / Issues / Licensing](#disclaimer--issues--licensing) - [Status Code Table](#status-codes) - [(TLDR)](#just-to-recap--tldr)
 ---  
 <br><br><br><br>
 
