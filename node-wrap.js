@@ -32,17 +32,17 @@ module.exports = (wrapFile, options, onStartChild, onCrashChild) => {
     startProcess(wrapFile, options, onStartChild, onCrashChild);
 }
 
-function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onCrashChild) {
+function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild) {
     if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Detected exit with code " + code);
     logToFile(options, code);
     if(code == 1 && restartOnCrash) setTimeout(()=>{
         if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarting crashed process");
-        onCrashChild();
-        startProcess(file, options);
+        if(!jsl.isEmpty(onCrashChild) && typeof onCrashChild == "function") onCrashChild();
+        startProcess(file, options, onStartChild, onCrashChild);
     }, crashTimeout);
     else if(code == 2) setTimeout(()=>{
         if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarting process");
-        startProcess(file, options);
+        startProcess(file, options, onStartChild, onCrashChild);
     }, restartTimeout);
     else {
         if(!jsl.isEmpty(options.restartCodes)) {
@@ -52,7 +52,7 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
             });
             if(restart) {
                 if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarting process");
-                return startProcess(file, options);
+                return startProcess(file, options, onStartChild, onCrashChild);
             }
         }
         else {
@@ -63,7 +63,7 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
 }
 
 function startProcess(file, options, onStartChild, onCrashChild) {
-    if(!jsl.isEmpty(onStartChild)) onStartChild();
+    if(!jsl.isEmpty(onStartChild) && typeof onStartChild == "function") onStartChild();
     var restartOnCrash, restartTimeout, crashTimeout, logConsoleOutput, logTimestamp;
     if(typeof options == "object" && !jsl.isEmpty(JSON.stringify(options))) {
         restartOnCrash = (options.restartOnCrash != null ? options.restartOnCrash : true);
@@ -83,7 +83,7 @@ function startProcess(file, options, onStartChild, onCrashChild) {
     else child = fork(file);
 
 
-    child.addListener("exit", code => exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onCrashChild));
+    child.addListener("exit", code => exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild));
 }
 
 function logToFile(options, code) {

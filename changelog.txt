@@ -1,0 +1,1 @@
+[0.1.2] hotfix - fixed fatal bug of child only restarting once and event functions being only called once
