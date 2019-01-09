@@ -5,7 +5,7 @@
 
 ### Install it:
 ```
->  npm i --save svjsl
+>  npm i --save node-wrap
 ```
 
 <br><br>
