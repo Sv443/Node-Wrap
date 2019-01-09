@@ -86,5 +86,5 @@ require("node-wrap")("./index.js", {
 Even though this package should do the job just fine, I can't guarantee anything.<br>
 I try my best to make it as reliable as possible but if you have any complaints or want to suggest a feature, please [create a new issue here](https://github.com/Sv443/node-wrap/issues) and I will get to you ASAP.<br><br>
 Additionally, I hereby (and by the provided MIT license) free myself of any liability and legal consequences.<br>
-This package was not made with the intention of being malicious so if it is used in criminal activities, I can't claim responsibility.<br><br>
+This package was not made with the intention of being malicious so if it is used in criminal activities, I can't be held responsible.<br><br>
 If you modify or share this package you are free to do that under one single condition: It has to still include the "LICENSE" file (also I'd be happy if you [contact me](https://sv443.net/), maybe I'll even advertise your version)
