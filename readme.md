@@ -43,8 +43,10 @@ To activate the wrapper's magic powers, you need to exit the child process with 
 | --- | --- | --- |  
 | `0` | Stop | This completely stops the child and wrapping process |  
 | `1` | Crash | This triggers a restart if the "restartOnCrash" property of the settings was not set to false (it defaults to true) |  
-| `2` | Restart | This triggers an intentional restart |  
+| `2` | Restart | This triggers an intentional restart |<br>
+
 <br><br><br>
+
 So let's say your Discord bot has a developer-only "/restart" command.<br>
 To trigger an intentional restart you need to exit the script with the status code `2` (see the table above), just like this:
 ```js
