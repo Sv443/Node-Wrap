@@ -1,10 +1,10 @@
-# Node-Wrap v0.1.0
+# <img src="https://raw.githubusercontent.com/Sv443/Node-Wrap/master/icons/icon_small.png" style="width: 2.5vw;height: 2.5vw;"> <u>Node-Wrap v0.1.0</u> <br> [![](https://img.shields.io/github/license/Sv443/node-wrap.svg?style=flat-square)](https://github.com/Sv443/node-wrap/blob/master/LICENSE) [![](https://img.shields.io/badge/JSDoc-supported-green.svg?style=flat-square)](http://usejsdoc.org/) [![](https://img.shields.io/github/issues/Sv443/node-wrap.svg?style=flat-square)](https://github.com/Sv443/node-wrap/issues) [![](https://img.shields.io/github/stars/Sv443/node-wrap.svg?style=flat-square)](https://github.com/Sv443/node-wrap/)
 ## A lightweight library that wraps your script to restart it once it crashes and to provide other useful stuff
 
 <br>
 
 ---
-## [Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-some-of-them-changed-from-default) - [Disclaimer / Issues / Licensing](#disclaimer--issues--licensing) - [Status Code Table](#status-codes) - [(TLDR)](#just-to-recap--tldr)
+## **Menu:** &nbsp; &nbsp;[Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-some-of-them-changed-from-default) - [Disclaimer / Issues / Licensing](#disclaimer--issues--licensing) - [Status Code Table](#status-codes) - [TLDR](#just-to-recap--tldr)
 ---  
 <br><br><br><br>
 
