@@ -3,6 +3,12 @@
 
 <br>
 
+### Install it:
+```
+>  npm i --save svjsl
+```
+
+<br><br>
 ---
 ## **Menu:** &nbsp; &nbsp;[Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-some-of-them-changed-from-default) - [Disclaimer / Issues / Licensing](#disclaimer--issues--licensing) - [Status Code Table](#status-codes) - [TLDR](#just-to-recap--tldr)
 ---  
