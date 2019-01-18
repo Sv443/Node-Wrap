@@ -1,1 +1,2 @@
 [0.1.2] hotfix - fixed fatal bug of child only restarting once and event functions being only called once
+[0.2.0] shut down on boot loop support - option to force keep alive, no matter what happens

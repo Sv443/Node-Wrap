@@ -4,8 +4,8 @@
 // Set one setting at a time to true to test it:
 const set = {
     stop: false, // Code 0
-    crash: false, // Code 1
-    restart: true, // Code 2
+    crash: true, // Code 1
+    restart: false, // Code 2
     other: false // Code 3
 };
 
@@ -42,6 +42,6 @@ else if(set.other) {
 }
 else {
     setTimeout(()=>{
-        process.exit(0); // <- it's a good practice to stop the script if it's done (don't let it "run out" by itself) (of course don't do this while awaiting an async function or in a while-like loop)
+        while(true) {} // infinite loop after passing the initialization (-> script is now initialized)
     }, 3500);
 }
