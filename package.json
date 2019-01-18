@@ -1,6 +1,6 @@
 {
   "name": "node-wrap",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A lightweight, zero-dependency package that wraps your script to restart it once it crashes and to provide other useful stuff",
   "main": "node-wrap.js",
   "scripts": {
@@ -22,7 +22,5 @@
   "bugs": {
     "url": "https://github.com/Sv443/node-wrap/issues"
   },
-  "homepage": "https://github.com/Sv443/node-wrap#readme",
-  "dependencies": {
-  }
+  "homepage": "https://github.com/Sv443/node-wrap#readme"
 }
