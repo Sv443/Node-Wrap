@@ -156,7 +156,7 @@ function updateScript() {
 }
 ```
 <br>
-This shutdown behavior can also be triggered from inside the child process, by exiting with the code `3`, like this:
+This shutdown behavior can also be triggered from inside the child process, by exiting with the code `3`, like this:  
 ```js
 process.exit(3);
 ```
