@@ -1,14 +1,17 @@
 `
     © 2019 Sv443 - https://sv443.net/ - GitHub: https://github.com/Sv443
 
-    This package is licensed under the MIT license (https://github.com/Sv443/Node-Wrap/blob/master/LICENSE)
+    Node-Wrap is licensed under the MIT license (https://github.com/Sv443/Node-Wrap/blob/master/LICENSE)
 `;
 
 
 
+    // init Node-Wrap    =======================================================================================================================================================================================================================================================================================================================================================
+
 const fs = require("fs");
-const fork = require('child_process').fork;
-const jsl = { //the only function of the package "svjsl" I really need:
+const http = require("http");
+const fork = require("child_process").fork;
+const jsl = { //the only function of the package "svjsl" I need (to save dependencies and space):
     isEmpty: input => (input === undefined || input === null || input == "" || input == [] || input == "{}" || input == "{[]}") ? true : false
 }
 
@@ -18,20 +21,62 @@ var child, logToConsole = false, crashCounter, bootLoopTimeout = 0, initHR;
 var isSoftSD = false;
 var prev = {};
 var startingUpAfterSoftSD = false; // probably not needed though unsure. Will probably deprecate at a later stage
+var initialized = false;
+
+
+
+
+    // typedefs    =======================================================================================================================================================================================================================================================================================================================================================
+
+        
 
 /**
  * @typedef wrapperOptions Additional options
- * @prop {Boolean} [restartOnCrash=true] Whether the child process should be restarted after it crashed
- * @prop {Number} [crashTimeout=2000] The timeout after a crash after which the child process should be restarted
- * @prop {Number} [restartTimeout=0] The timeout after a restart command after which the child process should be restarted
- * @prop {Boolean} [console=true] Whether node-wrap should log some important info to the main console (stuff like "Starting process" and "Restarting process")
- * @prop {String} [logFile="none"] Logs all status codes to that file, leave null or undefined for no file logging
- * @prop {String} [logConsoleOutput="none"] Logs all console outputs of the child process to that file, leave null or undefined for no file logging
- * @prop {Boolean} [logTimestamp=true] Whether a timestamp should be added to the above logs
- * @prop {Array<Number>} [restartCodes="[]"] What additional exit codes should invoke a restart
- * @prop {Number} [bootLoopDetection=0] Boot loop prevention mechanism: enter the estimated time in milliseconds it usually takes to INITIALIZE (until an infinite loop of some sort gets started) the child process (0 or leave empty to disable) (higher number = higher stability but also longer delay until the boot loop detection kicks in - if you're unsure or it's unstable, take the biggest number of your measurements and/or add a few seconds)
- * @prop {Boolean} [alwaysKeepAlive=false] Set to true to force node-wrap to insistently keep alive / restart the child process as fast and reliably as possible (unaffected by boot loop detection though)
+ * @property {Boolean} [restartOnCrash=true] Whether the child process should be restarted after it crashed
+ * @property {Number} [crashTimeout=2000] The timeout after a crash after which the child process should be restarted
+ * @property {Number} [restartTimeout=0] The timeout after a restart command after which the child process should be restarted
+ * @property {Boolean} [console=true] Whether node-wrap should log some important info to the main console (stuff like "Starting process" and "Restarting process")
+ * @property {String} [logFile="none"] Logs all status codes to that file, leave null or undefined for no file logging
+ * @property {String} [logConsoleOutput="none"] Logs all console outputs of the child process to that file, leave null or undefined for no file logging
+ * @property {Boolean} [logTimestamp=true] Whether a timestamp should be added to the above logs
+ * @property {Array<Number>} [restartCodes="[]"] What additional exit codes should invoke a restart
+ * @property {Number} [bootLoopDetection=0] Boot loop prevention mechanism: enter the estimated time in milliseconds it usually takes to INITIALIZE (until an infinite loop of some sort gets started) the child process (0 or leave empty to disable) (higher number = higher stability but also longer delay until the boot loop detection kicks in - if you're unsure or it's unstable, take the biggest number of your measurements and/or add a few seconds)
+ * @property {Boolean} [alwaysKeepAlive=false] Set to true to force node-wrap to insistently keep alive / restart the child process as fast and reliably as possible (unaffected by boot loop detection though)
  */
+
+/**
+ * @typedef {Object} eventActionOptions
+ * @property {Boolean} [eventActions.enabled=false] Whether this action should be activated (true) or not (false)
+ * @property {("POST"|"PATCH"|"DELETE"|"PUT")} [eventActions.method] The HTTP request method
+ * @property {String} [eventActions.body] What the HTTP request body has to look like
+ * @memberof eventActions
+ */
+
+/**
+ * @typedef {Object} eventActions How the different commands should be triggered
+ * @property {eventActionOptions} [stopCP] How the stop command should be triggered
+ * @property {eventActionOptions} [startCP] How the stop command should be triggered
+ * @property {eventActionOptions} [restartCP] How the stop command should be triggered
+ * @property {eventActionOptions} [viewLog] How the stop command should be triggered
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // initialize CP    =======================================================================================================================================================================================================================================================================================================================================================
+
+
 
 /**
  * Initialize node-wrap and start the child process
@@ -66,6 +111,14 @@ module.exports = (wrapFile, options, onStartChild, onCrashChild, onStopChild) =>
     }
 }
 
+
+
+
+
+    // start CP    =======================================================================================================================================================================================================================================================================================================================================================
+
+
+
 /**
  * Starts the child process that was previously stopped with exit code 3
  * @returns {Boolean} True if startup could be commenced, false if not (this probably occurs if the child process hasn't been initialized and / or stopped manually yet)
@@ -80,12 +133,20 @@ module.exports.start = () => {
             isSoftSD = false;
             return true;
         }
-        catch {
+        catch(err) {
             return false;
         }
     }
     else return false;
 }
+
+
+
+
+
+    // stop CP    =======================================================================================================================================================================================================================================================================================================================================================
+
+
 
 /**
  * Stops the child process using the signal "SIGKILL", if none is specified
@@ -105,6 +166,74 @@ module.exports.stop = signal => {
         return false;
     }
 }
+
+
+
+
+    // HttpListener class    =======================================================================================================================================================================================================================================================================================================================================================
+
+
+
+/**
+ * Manage the HTTP listener - it can trigger actions on an HTTP request
+ * @class
+ * @namespace HttpListener
+ */
+const HttpListener = class {
+    /**
+     * Initialize the HTTP listener
+     * @memberof HttpListener
+     * @param {Number} [port=80] The port the HTTP listener should listen on
+     * @param {String} [allowedIP=("localhost"|"127.0.0.1"|"0.0.0.0")] The only IP that can trigger actions - for localhost leave empty / null - has to be IPv4
+     * @param {eventActions} [eventActions] The conditions that should trigger an event
+     */
+    constructor(port, allowedIP, eventActions) {
+        this.options = {
+            port: (parseInt(port) > 0 ? parseInt(port) : 80),
+            allowedIP: (!jsl.isEmpty(allowedIP) && (typeof allowedIP == "string") ? allowedIP.toString() : "local"),
+            events: {
+                stopCP: {
+                    enabled: (!jsl.isEmpty(eventActions.stopCP.enabled) ? eventActions.stopCP.enabled : false),
+                    method: "POST",
+                    body: "STOP"
+                },
+                startCP: {
+                    enabled: false,
+                    method: "POST",
+                    body: "START"
+                },
+                restartCP: {
+                    enabled: false,
+                    method: "POST",
+                    body: "RESTART"
+                },
+                viewLog: {
+                    enabled: false,
+                    method: "POST",
+                    body: "LOG"
+                }
+            }
+        }
+        this.start();
+    }
+
+    start() {
+
+    }
+
+    stop() {
+
+    }
+}
+module.exports.HttpListener = HttpListener;
+
+
+
+
+
+    // private - exit CP    =======================================================================================================================================================================================================================================================================================================================================================
+
+
 
 function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild, onStopChild) {
     try {
@@ -178,6 +307,14 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
     }
 }
 
+
+
+
+
+    // private - start CP    =======================================================================================================================================================================================================================================================================================================================================================
+
+
+
 function startProcess(file, options, onStartChild, onCrashChild, onStopChild) {
     try {
         startingUpAfterSoftSD = false;
@@ -210,6 +347,14 @@ function startProcess(file, options, onStartChild, onCrashChild, onStopChild) {
         }
     }
 }
+
+
+
+
+
+    // private - log to file    =======================================================================================================================================================================================================================================================================================================================================================
+
+
 
 function logToFile(options, code) {
     if(options.logFile != null && typeof options.logFile == "string") fs.appendFileSync(options.logFile, ((options.logTimestamp != null ? options.logTimestamp : true) === true ? "[" + new Date().toString() + "]:  " : "") + "Process got status code " + code + " - Options were: " + JSON.stringify(options) + "\n");

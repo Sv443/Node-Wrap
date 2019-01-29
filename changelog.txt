@@ -16,7 +16,9 @@
         - exit with code 3 will trigger a stop
         - the function nodeWrap.stop() will also trigger a stop
         - the function nodeWrap.start() will trigger a start 
-    - HTTP duwajst
+    - added HTTP listener to trigger certain actions on an incoming HTTP request
+        - fancy ass documentation I never used before
+        - OOP because why not?
     - major stability improvements
     - minor improvements
         - increased boot loop detection threshold multiplier by 0.2

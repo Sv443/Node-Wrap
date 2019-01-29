@@ -23,3 +23,12 @@ nodeWrap("./example/processToBeWrapped.js", {
         nodeWrap.start();
     }, 3000);
 });
+
+const test = new nodeWrap.HttpListener(80, null, {
+    restartCP: {
+
+    },
+    startCP: {
+        
+    }
+});
