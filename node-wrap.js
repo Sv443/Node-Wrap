@@ -1,12 +1,23 @@
+`
+    © 2019 Sv443 - https://sv443.net/ - GitHub: https://github.com/Sv443
+
+    This package is licensed under the MIT license (https://github.com/Sv443/Node-Wrap/blob/master/LICENSE)
+`;
+
+
+
 const fs = require("fs");
 const fork = require('child_process').fork;
-const jsl = { //the only function of "svjsl" I really need
+const jsl = { //the only function of the package "svjsl" I really need:
     isEmpty: input => (input === undefined || input === null || input == "" || input == [] || input == "{}" || input == "{[]}") ? true : false
 }
 
 var crashCountThreshold = 5;
-var crashTimeoutMultiplier = 2.5;
+var crashTimeoutMultiplier = 2.7;
 var child, logToConsole = false, crashCounter, bootLoopTimeout = 0, initHR;
+var isSoftSD = false;
+var prev = {};
+var startingUpAfterSoftSD = false; // probably not needed though unsure. Will probably deprecate at a later stage
 
 /**
  * @typedef wrapperOptions Additional options
@@ -17,32 +28,85 @@ var child, logToConsole = false, crashCounter, bootLoopTimeout = 0, initHR;
  * @prop {String} [logFile="none"] Logs all status codes to that file, leave null or undefined for no file logging
  * @prop {String} [logConsoleOutput="none"] Logs all console outputs of the child process to that file, leave null or undefined for no file logging
  * @prop {Boolean} [logTimestamp=true] Whether a timestamp should be added to the above logs
- * @prop {Array<Number>} [restartCodes="no additional codes"] What additional exit codes should invoke a restart
+ * @prop {Array<Number>} [restartCodes="[]"] What additional exit codes should invoke a restart
  * @prop {Number} [bootLoopDetection=0] Boot loop prevention mechanism: enter the estimated time in milliseconds it usually takes to INITIALIZE (until an infinite loop of some sort gets started) the child process (0 or leave empty to disable) (higher number = higher stability but also longer delay until the boot loop detection kicks in - if you're unsure or it's unstable, take the biggest number of your measurements and/or add a few seconds)
  * @prop {Boolean} [alwaysKeepAlive=false] Set to true to force node-wrap to insistently keep alive / restart the child process as fast and reliably as possible (unaffected by boot loop detection though)
  */
 
 /**
- * 
+ * Initialize node-wrap and start the child process
  * @param {String} wrapFile File that should be wrapped
  * @param {wrapperOptions} [options]
  * @param {Function} [onStartChild] Function that should be executed when the child starts
  * @param {Function} [onCrashChild] Function that should be executed when the child crashes
+ * @param {Function} [onStopChild] Function that should be executed when the child gets stopped by status code 3
+ * @returns {Boolean} True, if child process could be created, false, if not (mostly occurs if a CP has already been created)
  */
-module.exports = (wrapFile, options, onStartChild, onCrashChild) => {
-    initHR = process.hrtime();
-    crashCounter = 0;
-    if(options.console == null || typeof logToConsole != "boolean") logToConsole = true;
-    else logToConsole = options.console;
-    if(logToConsole) console.log("\x1b[32m\x1b[1m[node-wrap]\x1b[0m: Started child process");
+module.exports = (wrapFile, options, onStartChild, onCrashChild, onStopChild) => {
+    if(!initialized) {
+        initialized = true;
+        initHR = process.hrtime();
+        crashCounter = 0;
+        if(options.console == null || typeof logToConsole != "boolean") logToConsole = true;
+        else logToConsole = options.console;
+        if(logToConsole) console.log("\x1b[32m\x1b[1m[node-wrap]\x1b[0m: Started child process");
 
-    bootLoopTimeout = ((options.bootLoopDetection > 10000 ? options.bootLoopDetection + 7000 + (options.crashTimeout != null ? options.crashTimeout : 4000) : options.bootLoopDetection + (options.crashTimeout != null ? options.crashTimeout : 5000)) * (crashCountThreshold + crashTimeoutMultiplier));
-    if(options.alwaysKeepAlive === true) options.bootLoopDetection = 0;
+        bootLoopTimeout = ((options.bootLoopDetection > 10000 ? options.bootLoopDetection + 7000 + (options.crashTimeout != null ? options.crashTimeout : 4000) : options.bootLoopDetection + (options.crashTimeout != null ? options.crashTimeout : 5000)) * (crashCountThreshold + crashTimeoutMultiplier));
+        if(options.alwaysKeepAlive === true) options.bootLoopDetection = 0;
 
-    startProcess(wrapFile, options, onStartChild, onCrashChild);
+        startProcess(wrapFile, options, onStartChild, onCrashChild, onStopChild);
+
+        setInterval(()=>{}, 20000);
+
+        return true;
+    }
+    else {
+        console.log("\x1b[31m\x1b[1m[node-wrap]\x1b[0m: A child process is already running!");
+        return false;
+    }
 }
 
-function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild) {
+/**
+ * Starts the child process that was previously stopped with exit code 3
+ * @returns {Boolean} True if startup could be commenced, false if not (this probably occurs if the child process hasn't been initialized and / or stopped manually yet)
+ */
+module.exports.start = () => {
+    if(isSoftSD) {
+        try {
+            initHR = process.hrtime();
+            startingUpAfterSoftSD = true;
+            if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Manually started child process");
+            startProcess(prev.file, prev.options, prev.onStartChild, prev.onCrashChild, prev.onStopChild);
+            isSoftSD = false;
+            return true;
+        }
+        catch {
+            return false;
+        }
+    }
+    else return false;
+}
+
+/**
+ * Stops the child process using the signal "SIGKILL", if none is specified
+ * @param {String} [signal="SIGKILL"] The signal that should be sent to kill the child process. List of signals: http://bit.ly/2RTj9rp
+ * @returns {Boolean} True, if child process could be shut down, false, if not (mostly occurs if you haven't initialized the CP yet)
+ */
+module.exports.stop = signal => {
+    try {
+        if(jsl.isEmpty(signal)) signal = "SIGKILL";
+        if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Manually stopped child process");
+        child.kill(signal);
+        isSoftSD = true;
+        return true;
+    }
+    catch(err) {
+        console.log("\x1b[31m\x1b[1m[node-wrap]\x1b[0m: Couldn't stop the child process due to an error: " + err + "\n\x1b[31m\x1b[1m[node-wrap]\x1b[0m: This might be because there is no child process or it was already stopped.");
+        return false;
+    }
+}
+
+function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild, onStopChild) {
     try {
         if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Detected exit with code " + code + (code == 1 ? " - restarting in " + (crashTimeout / 1000) + "s" : ""));
         logToFile(options, code);
@@ -61,9 +125,9 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
             }
 
             if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarted crashed child process" + (!jsl.isEmpty(options.bootLoopDetection) && options.bootLoopDetection > 0 ? " (crash #" + crashCounter + ")" : ""));
-            if(!jsl.isEmpty(onCrashChild) && typeof onCrashChild == "function") onCrashChild();
+            if(!jsl.isEmpty(onCrashChild) && typeof onCrashChild == "function") onCrashChild(process.hrtime(initHR)[0]);
 
-            startProcess(file, options, onStartChild, onCrashChild);
+            startProcess(file, options, onStartChild, onCrashChild, onStopChild);
 
         }, crashTimeout);
 
@@ -71,8 +135,22 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
             if(options.alwaysKeepAlive === true) restartTimeout = 0;
             setTimeout(()=>{
                 if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarted child process");
-                startProcess(file, options, onStartChild, onCrashChild);
+                startProcess(file, options, onStartChild, onCrashChild, onStopChild);
             }, restartTimeout);
+        }
+        else if(code == 3) {
+            if(options.alwaysKeepAlive === true) startProcess(file, options, onStartChild, onCrashChild, onStopChild);
+            else {
+                if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Stopped child process (status 3)");
+                if(!jsl.isEmpty(onStopChild) && typeof onStopChild == "function") onStopChild(process.hrtime(initHR)[0]);
+                isSoftSD = true;
+                prev.file = file;
+                prev.options = options;
+                prev.onStartChild = onStartChild;
+                prev.onCrashChild = onCrashChild;
+                prev.onStopChild = onStopChild;
+                return;
+            }
         }
         else {
             if(!jsl.isEmpty(options.restartCodes)) {
@@ -82,7 +160,7 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
                 });
                 if(restart) {
                     if(logToConsole) console.log("\x1b[33m\x1b[1m[node-wrap]\x1b[0m: Restarted child process");
-                    return startProcess(file, options, onStartChild, onCrashChild);
+                    return startProcess(file, options, onStartChild, onCrashChild, onStopChild);
                 }
             }
             else {
@@ -92,17 +170,18 @@ function exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, o
         }
     }
     catch(err) {
-        if(options.alwaysKeepAlive === true) setTimeout(()=>startProcess(file, options, onStartChild, onCrashChild), 50);
+        if(options.alwaysKeepAlive === true) setTimeout(()=>startProcess(file, options, onStartChild, onCrashChild, onStopChild), 50);
         else {
-            console.log("\x1b[31m\x1b[1m[node-wrap]\x1b[0m: internal error: " + err + "\nIf you don't want this to shut down the child process, set the option \"alwaysKeepAlive\" to true.");
+            console.log("\x1b[31m\x1b[1m[node-wrap]\x1b[0m: internal error: " + err + "\n\x1b[31m\x1b[1m[node-wrap]\x1b[0m: If you don't want this to shut down the child process, set the option \"alwaysKeepAlive\" to true.");
             process.exit(1);
         }
     }
 }
 
-function startProcess(file, options, onStartChild, onCrashChild) {
+function startProcess(file, options, onStartChild, onCrashChild, onStopChild) {
     try {
-        if(!jsl.isEmpty(onStartChild) && typeof onStartChild == "function") onStartChild();
+        startingUpAfterSoftSD = false;
+        if(!jsl.isEmpty(onStartChild) && typeof onStartChild == "function") onStartChild(process.hrtime(initHR)[0]);
         var restartOnCrash, restartTimeout, crashTimeout, logConsoleOutput, logTimestamp;
         if(typeof options == "object" && !jsl.isEmpty(JSON.stringify(options))) {
             restartOnCrash = (options.restartOnCrash != null ? options.restartOnCrash : true);
@@ -121,10 +200,10 @@ function startProcess(file, options, onStartChild, onCrashChild) {
         }
         else child = fork(file);
 
-        child.addListener("exit", code => exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild));
+        child.addListener("exit", code => exitHandler(code, restartOnCrash, crashTimeout, restartTimeout, file, options, onStartChild, onCrashChild, onStopChild));
     }
     catch(err) {
-        if(options.alwaysKeepAlive === true) setTimeout(()=>startProcess(file, options, onStartChild, onCrashChild), 50);
+        if(options.alwaysKeepAlive === true) setTimeout(()=>startProcess(file, options, onStartChild, onCrashChild, onStopChild), 50);
         else {
             console.log("\x1b[31m\x1b[1m[node-wrap]\x1b[0m: internal error: " + err + "\nIf you don't want this to shut down the child process, set the option \"alwaysKeepAlive\" to true.");
             process.exit(1);

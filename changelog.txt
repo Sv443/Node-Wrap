@@ -1,2 +1,28 @@
-[0.1.2] hotfix - fixed fatal bug of child only restarting once and event functions being only called once
-[0.2.0] shut down on boot loop support - option to force keep alive, no matter what happens
+[Alpha-0.1.2]
+    - hotfix: fixed fatal bug of child only restarting once and event functions being only called once
+
+
+
+
+[Alpha-0.2.0]
+    - support for shutdown on boot loop
+    - option to force keep alive, no matter what happens
+
+
+
+
+[Alpha-0.3.0]
+    - functions to stop and start the child process dynamically to allow for more customization and stuff like self-updating (which will maybe come soon) - these functions work in conjunction (you can start & stop how often you want to)
+        - exit with code 3 will trigger a stop
+        - the function nodeWrap.stop() will also trigger a stop
+        - the function nodeWrap.start() will trigger a start 
+    - HTTP duwajst
+    - major stability improvements
+    - minor improvements
+        - increased boot loop detection threshold multiplier by 0.2
+        - now resetting hrtime on every action that involves the starting of the CP
+        - now passing the hrtime to every callback function
+        - added copyright and license notice
+        - improved example script
+        - ran more stress-tests
+        - fixed license date
