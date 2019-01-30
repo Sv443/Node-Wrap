@@ -1,6 +1,7 @@
 // Try to edit settings and run this script to test out node-wrap
 
 const nodeWrap = require("../node-wrap.js");
+var test;
 
 nodeWrap("./example/processToBeWrapped.js", {
     restartOnCrash: true,                   // whether the child process should be restarted after it crashed
@@ -15,20 +16,26 @@ nodeWrap("./example/processToBeWrapped.js", {
     alwaysKeepAlive: false                  // set to true to force node-wrap to insistently keep alive / restart the child process as fast and reliably as possible (unaffected by boot loop detection though, so be careful)
 }, (time) => {
     // on start
+    test = new nodeWrap.HttpListener(80, null, {
+        restartCP: {
+            enabled: true
+        },
+        startCP: {
+            enabled: true
+        },
+        stopCP: {
+            enabled: true
+        },
+        viewLog: {
+            enabled: true
+        }
+    });
 }, (time) => {
     // on crash (status 1)
 }, (time) => {
     // on manual stop with possibility to restart (status 3)
+    test.stop();
     setTimeout(()=>{
         nodeWrap.start();
     }, 3000);
-});
-
-const test = new nodeWrap.HttpListener(80, null, {
-    restartCP: {
-
-    },
-    startCP: {
-        
-    }
 });

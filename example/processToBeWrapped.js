@@ -6,7 +6,7 @@ const set = {
     stop: false, // Code 0
     crash: false, // Code 1
     restart: false, // Code 2
-    softStop: true, // Code 3
+    softStop: false, // Code 3
     other: false // code 4
 };
 
