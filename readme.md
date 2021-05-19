@@ -13,10 +13,12 @@
 ---
 ## **Menu:** &nbsp; &nbsp;[Minimal Example](#and-that-is-where-this-package-comes-into-play) - [Full Example](#full-example-with-all-options-some-of-them-changed-from-default) - [Boot Loop Detection](#boot-loop-detection) - [Forceful KeepAlive](#but-what-if-you-want-stability-instead) - [Manual Shutdown / Start](#manually-shutting-down-the-child-process--starting-it-again) - [Status Code Table](#status-codes) - [Disclaimer / Issues / Licensing](#disclaimer--issues--licensing) - [TLDR](#just-to-recap--tldr)
 ---  
+
 <br><br><br><br>
 
 
 <br><br><br>
+
 ## Let's say you develop a server side application...
 ...whether it is an API of some sort or something like a Discord bot, you will run into these problems:<br>
 - **Node always exits the script if an error can't be caught**<br>
@@ -54,10 +56,19 @@ bootLoopDetection: 0,    // boot loop prevention mechanism: enter the estimated 
 alwaysKeepAlive: false   // set to true to force Node-Wrap to insistently keep alive / restart the child process as fast and reliably as possible (unaffected by boot loop detection though)
 ```
 Afterwards the script begins by starting the provided script as a child process.<br>
-Because the "logConsoleOutput" property defaulted to null, all stdout (console) output of the child script will be sent to the console of the wrapper.<br>
-Now the child process already runs!<br>
-To activate the wrapper's magic powers, you need to exit the child process with a certain code from the following list.<br><br>
-## Status Codes
+Because the "logConsoleOutput" property defaulted to null, all stdout (console) output of the child script will be sent to the console of the wrapper.
+
+<br>
+
+Now the child process already runs!
+
+<br>
+
+To activate the wrapper's magic powers, you need to exit the child process with a certain code from the following list.
+
+<br><br>
+
+## Exit Codes
 | Code | Action | Description |  
 | --- | --- | --- |  
 | `0` | Stop | This completely stops the child and wrapping process |  
@@ -155,8 +166,11 @@ function updateScript() {
     });
 }
 ```
+
 <br>
+
 This shutdown behavior can also be triggered from inside the child process, by exiting with the code `3`, like this:  
+
 ```js
 process.exit(3);
 ```
@@ -178,7 +192,7 @@ process.exit(3);
 ## Just to recap / TLDR:
 1. Create another script file that only contains the minimal example above or the full example at the bottom of this readme if you want to configure it yourself
 2. Change the "main" property in your "package.json" to start the new file you just made instead (also change other things if you have any to make sure the new file is being run)
-3. Add the needed `process.exit(code)` function(s) to your script(s) to trigger the wanted action(s)
+3. Add the needed `process.exit(code)` functions to your script files to trigger the wanted actions (see [list of exit codes](#exit-codes))
 
 
 
